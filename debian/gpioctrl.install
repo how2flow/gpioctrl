@@ -1,0 +1,2 @@
+gpioctrl    usr/sbin
+scripts/*   usr/share/gpioctrl

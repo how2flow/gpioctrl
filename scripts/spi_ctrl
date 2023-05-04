@@ -1,0 +1,13 @@
+#!/bin/bash
+
+setup "spi"
+
+echo "spi device: 0.0 / 0.1 / ..."
+read -r -p "Select spi device: " d
+
+while true; do
+  store "spi" "/dev/spidev${d}"
+  sleep .5
+done
+
+# vim: set ft=sh ts=2 sw=2 sts=2 et

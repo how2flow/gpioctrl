@@ -1,0 +1,14 @@
+#!/bin/bash
+
+setup "i2c"
+
+echo "i2c bus: 0 / 1 / ..."
+read -r -p "Select i2c bus: " bus
+
+while true; do
+  store "i2c" "${bus}"
+  sleep .5
+done
+
+
+# vim: set ft=sh ts=2 sw=2 sts=2 et

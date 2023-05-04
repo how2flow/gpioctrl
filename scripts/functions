@@ -1,0 +1,148 @@
+#!/bin/bash
+
+get_wpi() {
+  local phy_to_wpi=('x' 'x' 'x' 8 'x' 9 'x' 7 15 'x' 16 0 1 2 'x' 3  4 'x' 5 12 'x' 13 6 14 10 'x' 11 30 31 21 'x' 22 26 23 'x' 24 27 'x' 'x' 'x' 'x')
+
+  echo "${phy_to_wpi[$1]}"
+}
+
+setup() {
+  case $1 in
+    can)
+      # dependencies
+      if [ ! -x $(command -v ifconfig) ]; then
+        echo "Install net-tools before Using It!"
+        exit 1
+      fi
+
+      if [ ! -x $(command -v cansend) ]; then
+        echo "Install can-utils before Using It!"
+        exit 1
+      fi
+
+      # set up can
+      ifconfig can0 down
+      ip link set can0 type can bitrate 500000
+      ifconfig can0 up
+      ;;
+    gpio)
+      # dependencies
+      if [ ! -x $(command -v gpio) ]; then
+        echo "Install wiringPi(or odroid-wiringpi) before Using It!"
+        exit 1
+      fi
+
+      for phy in {1..40}; do
+        PIN=$(get_wpi ${phy})
+        if [ "${PIN}" == 'x' ]; then
+          continue
+        fi
+
+        # initialize gpio mode
+        gpio mode "${PIN}" "out"
+        if [ $? != 0 ]; then
+          continue
+        fi
+
+        # initialize gpio level
+        gpio write "${PIN}" 0
+        if [ $? != 0 ]; then
+          continue
+        fi
+      done
+      ;;
+    i2c)
+      # dependencies
+      if [ ! -x $(command -v i2cdetect) ]; then
+        echo "Install i2c-tools before Using It!"
+        exit 1
+      fi
+      ;;
+    spi)
+      # dependencies
+      if [ ! -x $(command -v spi-config) ]; then
+        echo "Install spi-tools before Using It!"
+        exit 1
+      fi
+      ;;
+  esac
+
+  echo "$1 ready..."
+  sleep 3
+}
+
+store() {
+  local msg=""
+  local src=""
+  local store="$(pwd -P)"/"$1.log"
+  local temp="$(pwd -P)"/"$1.temp"
+  local wpi="${2}"
+
+  case "${1}" in
+    can)
+      src="/proc/net/dev"
+      clear
+      cat "${src}" | grep "face" -B 1 >> "${store}"
+      cat "${src}" | grep "can" >> "${store}"
+      echo "" >> "${store}"
+      ;;
+    gpio)
+      clear
+
+      if [ -f "/dev/gpiomem" ]; then
+        gpio readall
+      else
+        sudo gpio readall
+      fi
+
+      msg="$(gpio read ${wpi})"
+      printf "%s %2s %5s\n" "wpi:" "${wpi}" "${msg}" >> "${store}"
+      ;;
+    i2c)
+      clear
+
+      if [ "${EUID}" -eq 0 ]; then
+        i2cdetect -y $2
+      else
+        sudo i2cdetect -y $2
+      fi
+
+      if [ $? -ne 0 ]; then
+        exit 1
+      fi
+
+      echo "i2c detect $2" >> "${store}"
+      ;;
+    spi)
+      clear
+
+      if [ "${EUID}" -eq 0 ]; then
+        spi-config -d $2 -q
+      else
+        sudo spi-config -d $2 -q
+      fi
+
+      if [ $? -ne 0 ]; then
+        exit 1
+      fi
+
+      echo "spi query $2" >> "${store}"
+      ;;
+    *)
+      ;;
+  esac
+
+  echo "$1 store..."
+  sleep .1
+}
+
+Usage() {
+  echo "Usage: $0 [-a|--alt <arg>] [-g|--gpio] [--]"
+  echo "Usage: $0 [-a|--alt <arg>] [-g|--gpio] [--]"
+  echo "Options:"
+  echo "  -a, --alt <arg>    Specify an alternative value."
+  echo "  -h, --help         Display this help message and exit."
+  exit 0
+}
+
+# vim: set ft=sh ts=2 sw=2 sts=2 et

@@ -1,0 +1,25 @@
+#!/bin/bash
+
+setup "gpio"
+
+for phy in {1..40}; do
+  PIN="$(get_wpi ${phy})"
+  if [ "${PIN}" == 'x' ]; then
+    continue
+  fi
+
+  gpio write "${PIN}" 1 &
+  if [ $? != 0 ]; then
+    continue
+  fi
+  store "gpio" "${PIN}"
+
+  gpio write "${PIN}" 0 &
+  if [ $? != 0 ]; then
+    continue
+  fi
+  store "gpio" "${PIN}"
+
+done
+
+# vim: set ft=sh ts=2 sw=2 sts=2 et

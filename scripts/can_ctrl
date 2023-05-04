@@ -1,0 +1,14 @@
+#!/bin/bash
+
+setup "can"
+
+if [ $(ifconfig can* | wc -l) -lt 1 ]; then
+  echo "\"can\" node not found."
+  exit 1
+fi
+
+while true; do
+  cansend can0 123#11.22.33 &
+  store "can"
+  sleep .5
+done

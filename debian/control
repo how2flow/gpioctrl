@@ -1,0 +1,17 @@
+Source: gpioctrl
+Section: electronics
+Priority: optional
+Maintainer: Steve Jeong <steve@how2flow.net>
+Build-Depends: debhelper (>= 10),
+  net-tools
+
+Package: gpioctrl
+Architecture: any
+Multi-Arch: foreign
+Depends: ${misc:Depends},
+  ${shlibs:Depends},
+  can-utils,
+  i2c-tools,
+  net-tools,
+  spi-tools
+Description: GPIO control package with I/O utils
